@@ -37,6 +37,11 @@ jobs:
           test -s sw.js
           grep -q 'game.js' index.html
           echo "Ibadan Life source checks passed."
+      - name: Run mobile browser smoke test
+        run: |
+          python -m pip install --disable-pip-version-check pytest playwright
+          python -m playwright install --with-deps chromium
+          pytest -q tests/test_game_smoke.py
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
