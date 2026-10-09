@@ -73,6 +73,11 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator("#lifeChoices .choice").first.click()
                 page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').activeMission === 'market-delivery'")
                 assert "Bodija parcel delivery" in page.locator("#task").inner_text()
+
+                page.locator('[data-action="drive"]').click()
+                page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').driving === true")
+                page.locator('[data-action="drive"]').click()
+                page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').driving === false")
                 assert not errors, "Browser runtime errors: " + " | ".join(errors)
                 context.close()
                 browser.close()
