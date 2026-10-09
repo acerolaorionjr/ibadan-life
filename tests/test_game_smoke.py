@@ -65,6 +65,14 @@ def test_mobile_game_start_buy_mode_and_save():
                     timeout=15000,
                 )
                 assert "₦20,500" in page.locator("#money").inner_text()
+
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="missions"]').click()
+                page.locator('#appPanel [data-app-action="missions"]').click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                page.locator("#lifeChoices .choice").first.click()
+                page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').activeMission === 'market-delivery'")
+                assert "Bodija parcel delivery" in page.locator("#task").inner_text()
                 assert not errors, "Browser runtime errors: " + " | ".join(errors)
                 context.close()
                 browser.close()
