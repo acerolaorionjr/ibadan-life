@@ -119,6 +119,14 @@ def test_mobile_game_start_buy_mode_and_save():
                     timeout=15000,
                 )
                 page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="wardrobe"]').click()
+                page.locator('#appPanel [data-app-action="wardrobe"]').first.click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                page.locator("#lifeChoices .choice").nth(1).click()
+                page.wait_for_function(
+                    "() => JSON.parse(localStorage.getItem('ibadanLifeOutfits') || '[]').includes('Indigo streetwear')"
+                )
+                page.locator('.bottom button[data-tab="phone"]').click()
                 page.locator('.phoneGrid [data-app="business"]').click()
                 page.locator('#appPanel [data-app-action="business"]').first.click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
