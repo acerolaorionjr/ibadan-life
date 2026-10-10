@@ -67,6 +67,12 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "₦20,500" in page.locator("#money").inner_text()
 
                 page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="jobs"]').click()
+                page.locator('#appPanel [data-app-action="jobs"]').first.click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                page.locator("#lifeChoices .choice").first.click()
+                page.wait_for_function("Object.keys(JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').careerProgress || {}).length > 0")
+                page.locator('.bottom button[data-tab="phone"]').click()
                 page.locator('.phoneGrid [data-app="missions"]').click()
                 page.locator('#appPanel [data-app-action="missions"]').click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
