@@ -275,6 +275,11 @@ function dLabel(n){return appCopy[n]?appCopy[n][0]:n}
 document.querySelectorAll('[data-app]').forEach(b=>b.addEventListener('click',()=>openApp(b.dataset.app)));
 $('closePhone').addEventListener('click',()=>{phone.classList.remove('show');phone.setAttribute('aria-hidden','true')});$('closeBuy').addEventListener('click',closeBuyMode);
 function openPhone(){phone.classList.add('show');phone.setAttribute('aria-hidden','false')}
+if(new URLSearchParams(location.search).get('test')==='1'){
+ window.__ibadanTest=Object.freeze({
+  movePlayerNearNpc(){const target=npcs[0];if(target)player.position.set(target.g.position.x+1,0,target.g.position.z+1)}
+ });
+}
 renderUI()
 let deferredInstallPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;$('installBtn').classList.add('show')});
