@@ -3,6 +3,8 @@ name: Deploy Ibadan Life to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -28,7 +30,10 @@ jobs:
         with:
           node-version: 20
       - name: Validate game JavaScript
-        run: node --check game.js
+        run: |
+          node --check game.js
+          node --check multiplayer.js
+          node --check multiplayer-config.js
       - name: Validate required files
         run: |
           test -s index.html
@@ -41,7 +46,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check pytest playwright
           python -m playwright install --with-deps chromium
-          pytest -q tests/test_game_smoke.py
+          pytest -q tests
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
