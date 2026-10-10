@@ -187,7 +187,7 @@ function buyOrPlace(id){
  const i=inventory.indexOf(id);
  if(i>=0){furnitureVisual(item,i);inventory.splice(i,1);saveInventory();renderCatalogue();toast('🛋️ '+item.name+' placed');return}
  if(money<item.price){toast('💸 Not enough money for '+item.name);return}
- money-=item.price;inventory.push(id);saveInventory();renderCatalogue();renderUI();toast('📦 '+item.name+' added to storage');
+ money-=item.price;inventory.push(id);saveInventory();renderCatalogue();renderUI();saveGame();toast('📦 '+item.name+' added to storage');
 }
 function openBuyMode(){catalogueFilter='all';renderCatalogue();$('buyOverlay').classList.add('show');$('buyOverlay').setAttribute('aria-hidden','false')}
 function closeBuyMode(){$('buyOverlay').classList.remove('show');$('buyOverlay').setAttribute('aria-hidden','true')}
