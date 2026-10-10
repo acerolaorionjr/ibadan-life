@@ -42,7 +42,7 @@ def test_mobile_game_start_buy_mode_and_save():
                 page = context.new_page()
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
-                page.goto(f"http://127.0.0.1:{port}/index.html", wait_until="domcontentloaded")
+                page.goto(f"http://127.0.0.1:{port}/index.html?test=1", wait_until="domcontentloaded")
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
                 page.locator("#characterName").fill("Test Sim")
                 page.locator("#characterGender").select_option("Woman")
@@ -98,6 +98,7 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.wait_for_timeout(300)
                 page.keyboard.up("a")
                 page.keyboard.up("s")
+                page.evaluate("window.__ibadanTest.movePlayerNearNpc()")
                 page.locator('[data-action="interact"]').click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
                 assert "Friendship level" in page.locator("#lifeDesc").inner_text()
