@@ -6,7 +6,7 @@
     typeof config.publishableKey === 'string' && config.publishableKey.length > 10;
   const host = () => document.getElementById('appPanel');
   let client = null, user = null, profile = null, currentRoom = null, channel = null, presenceChannel = null;
-  let refreshToken = 0, online = new Map(), activeDM = null, activeDMName = '';
+  let refreshToken = 0, online = new Map(), activeDM = null, activeDMName = '', authListenerRegistered = false;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls)n.className=cls; if(text!==undefined)n.textContent=text; return n; };
   const state = message => { const node=document.querySelector('#ibadanMpStatus'); if(node)node.textContent=message; };
@@ -111,10 +111,13 @@
     const roomSelect=document.querySelector('#ibadanMpRoom');const roomName=roomSelect?.selectedOptions?.[0]?.textContent||'Room';
     state('Loading '+roomName+'…');
     const list=document.querySelector('#ibadanMpMessages');list.replaceChildren();
-    const {data,error}=await client.from('ibadan_room_messages').select('id,room_id,sender_id,body,created_at,ibadan_profiles(username,display_name)').eq('room_id',roomId).order('created_at',{ascending:false}).limit(60);
+    const {data,error}=await client.from('ibadan_room_messages').select('id,room_id,sender_id,body,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(60);
     if(token!==refreshToken)return;
     if(error){state(error.message||'Could not load messages.');return;}
-    (data||[]).reverse().forEach(addRoomMessage);
+    const senderIds=[...new Set((data||[]).map(row=>row.sender_id))];
+    const senderResult=senderIds.length?await client.from('ibadan_profiles').select('id,username,display_name').in('id',senderIds):{data:[]};
+    const senderMap=new Map((senderResult.data||[]).map(p=>[p.id,p]));
+    (data||[]).reverse().forEach(row=>addRoomMessage({...row,ibadan_profiles:senderMap.get(row.sender_id)}));
     channel=client.channel('ibadan-room-'+roomId);
     channel.on('postgres_changes',{event:'INSERT',schema:'public',table:'ibadan_room_messages',filter:'room_id=eq.'+roomId},async payload=>{
       if(token!==refreshToken)return;
@@ -171,7 +174,7 @@
   async function startDM(person){
     try{
       const {data,error}=await client.rpc('ibadan_start_dm',{other_user:person.id});if(error)throw error;
-      activeDM=data;activeDMName=person.display_name;document.querySelector('#ibadanMpDmTab').disabled=false;document.querySelector('#ibadanMpDmTitle').textContent='Private chat with '+person.display_name;view('dm');await loadDM(activeDM);
+      activeDM=data;activeDMName=person.display_name;document.querySelector('#ibadanMpDmTab').disabled=false;document.querySelector('#ibadanMpDmTitle').textContent='Private chat with '+person.display_name;view('dm');
     }catch(e){state(e.message||'Could not start a private conversation.');}
   }
   async function loadDM(conversationId){
@@ -196,7 +199,7 @@
   }
   async function blockPlayer(id,name){
     if(!confirm('Block @'+name+'? Their chat messages will be hidden from you and they cannot start a new DM with you.'))return;
-    const {error}=await client.from('ibadan_blocks').upsert({blocker_id:user.id,blocked_id:id});
+    const {error}=await client.from('ibadan_blocks').insert({blocker_id:user.id,blocked_id:id});
     if(error){state(error.message||'Could not block player.');return;}state('@'+name+' blocked.');await joinRoom(currentRoom);
   }
   async function reportPlayer(id,name){
@@ -216,7 +219,7 @@
     if(error){state('Could not check sign-in: '+error.message);renderAuth();return;}
     if(session){user=session.user;try{await loadProfile();await enterChat();}catch(e){state(e.message||'Could not load player profile.');}}
     else{renderAuth();state('Sign in or create a player account to chat.');}
-    client.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{if(event==='SIGNED_OUT'){await stopChannels();user=null;profile=null;render();}else if(session&&!user){user=session.user;try{await loadProfile();await enterChat();}catch(e){state(e.message||'Could not load player profile.');}}},0);});
+    if(!authListenerRegistered){authListenerRegistered=true;client.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{if(event==='SIGNED_OUT'){await stopChannels();user=null;profile=null;render();}else if(session&&!user){user=session.user;try{await loadProfile();await enterChat();}catch(e){state(e.message||'Could not load player profile.');}}},0);});}
   }
   window.IbadanMultiplayer={open:()=>{render().catch(e=>state(e.message||'Multiplayer failed to load.'));},isConfigured:()=>configured,queueSave:async saveData=>{
     if(!client||!user||!configured||!saveData)return;
