@@ -76,7 +76,7 @@ def test_mobile_game_start_buy_mode_and_save():
 
                 page.locator('.bottom button[data-tab="phone"]').click()
                 page.locator('.phoneGrid [data-app="vehicles"]').click()
-                page.locator('#appPanel [data-app-action="vehicles"]').click()
+                page.locator('#appPanel [data-app-action="vehicles"]').first.click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
                 assert "Garage" in page.locator("#lifeTitle").inner_text()
                 page.locator("#closeLife").click()
