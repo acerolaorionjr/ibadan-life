@@ -42,7 +42,7 @@ def test_mobile_game_start_buy_mode_and_save():
                 page = context.new_page()
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
-                page.goto(f"http://127.0.0.1:{port}/index.html", wait_until="domcontentloaded")
+                page.goto(f"http://127.0.0.1:{port}/index.html?test=1", wait_until="domcontentloaded")
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
                 page.locator("#characterName").fill("Test Sim")
                 page.locator("#characterGender").select_option("Woman")
@@ -55,6 +55,20 @@ def test_mobile_game_start_buy_mode_and_save():
                     "() => document.querySelector('#startScreen').style.display === 'none'"
                 )
                 assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
+
+                # The top finance shortcut must open the bank instead of being a dead button.
+                page.locator("#addMoney").click()
+                page.locator("#phoneOverlay.show").wait_for(state="visible")
+                assert "Bank" in page.locator("#appPanel h3").inner_text()
+                page.locator("#closePhone").click()
+
+                # Without a configured backend, Messages must retain offline NPC interactions.
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="messages"]').click()
+                page.locator('#appPanel [data-app-action="messages"]').click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                assert "neighbours" in page.locator("#lifeDesc").inner_text()
+                page.locator("#closeLife").click()
 
                 page.locator('.bottom button[data-tab="shop"]').click()
                 page.locator("#buyOverlay.show").wait_for(state="visible")
@@ -98,6 +112,7 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.wait_for_timeout(300)
                 page.keyboard.up("a")
                 page.keyboard.up("s")
+                page.evaluate("window.__ibadanTest.movePlayerNearNpc()")
                 page.locator('[data-action="interact"]').click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
                 assert "Friendship level" in page.locator("#lifeDesc").inner_text()
