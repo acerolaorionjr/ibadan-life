@@ -192,10 +192,10 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $ibadan$
   select exists (select 1 from public.ibadan_dm_members m
     where m.conversation_id = target_conversation and m.user_id = target_user);
-$;
+$ibadan$;
 revoke all on function public.ibadan_is_dm_member(uuid, uuid) from public;
 grant execute on function public.ibadan_is_dm_member(uuid, uuid) to authenticated;
 
@@ -228,7 +228,7 @@ create policy "ibadan_dm_messages_insert" on public.ibadan_dm_messages
 for insert to authenticated with check (
   sender_id = (select auth.uid())
   and exists (select 1 from public.ibadan_dm_members m
-    where m.conversation_id = conversation_id and m.user_id = (select auth.uid()))
+    where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id = (select auth.uid()))
   and not exists (
     select 1 from public.ibadan_dm_members m
     join public.ibadan_blocks b on b.blocker_id = m.user_id and b.blocked_id = (select auth.uid())
