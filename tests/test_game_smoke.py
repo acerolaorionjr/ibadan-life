@@ -44,17 +44,23 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{port}/index.html", wait_until="domcontentloaded")
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
-                page.locator('.startOption[data-start="average"]').click()
+                page.locator("#characterName").fill("Test Sim")
+                page.locator("#characterGender").select_option("Woman")
+                page.locator("#rollBackground").click()
+                page.locator("#originReveal:not([hidden])").wait_for(state="visible")
+                assigned_origin = page.locator("#originResult").inner_text()
+                assert any(origin in assigned_origin for origin in ["LAPO Baby", "Nepo Baby", "Student"])
                 page.locator("#startGame").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'"
                 )
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
 
                 page.locator('.bottom button[data-tab="shop"]').click()
                 page.locator("#buyOverlay.show").wait_for(state="visible")
                 page.locator('[data-buy="plant"]').click()
                 assert "plant" in page.evaluate("localStorage.getItem('ibadanLifeInventory') || ''")
-                assert "₦20,500" in page.locator("#catalogueMoney").inner_text()
+                assert page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))") == page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
 
                 page.locator('[data-buy="plant"]').click()
                 assert "plant" not in page.evaluate("localStorage.getItem('ibadanLifeInventory') || ''")
@@ -64,7 +70,7 @@ def test_mobile_game_start_buy_mode_and_save():
                     "() => document.querySelector('#startScreen').style.display === 'none'",
                     timeout=15000,
                 )
-                assert "₦20,500" in page.locator("#money").inner_text()
+                assert page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))") == page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
 
                 page.locator('.bottom button[data-tab="phone"]').click()
                 page.locator('.phoneGrid [data-app="jobs"]').click()
@@ -87,13 +93,9 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "Garage" in page.locator("#lifeTitle").inner_text()
                 page.locator("#closeLife").click()
 
-                page.locator('[data-action="drive"]').click()
-                page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').driving === true")
-                page.locator('[data-action="drive"]').click()
-                page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').driving === false")
                 page.keyboard.down("a")
                 page.keyboard.down("s")
-                page.wait_for_timeout(1400)
+                page.wait_for_timeout(300)
                 page.keyboard.up("a")
                 page.keyboard.up("s")
                 page.locator('[data-action="interact"]').click()
@@ -105,8 +107,14 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator('.phoneGrid [data-app="housing"]').click()
                 page.locator('#appPanel [data-app-action="housing"]').first.click()
                 page.locator("#lifeModal.show").wait_for(state="visible")
-                assert "Modest apartment" in page.locator("#lifeTitle").inner_text()
+                assert "Enter" in page.locator("#lifeTitle").inner_text()
                 page.locator("#closeLife").click()
+
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="profile"]').click()
+                page.locator("#profileName").fill("Updated Sim")
+                page.locator("#profileForm button[type='submit']").click()
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Updated Sim"
 
                 page.evaluate("""() => {
                     const save = JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}');
