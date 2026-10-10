@@ -74,6 +74,13 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').activeMission === 'market-delivery'")
                 assert "Bodija parcel delivery" in page.locator("#task").inner_text()
 
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="vehicles"]').click()
+                page.locator('#appPanel [data-app-action="vehicles"]').click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                assert "Garage" in page.locator("#lifeTitle").inner_text()
+                page.locator("#closeLife").click()
+
                 page.locator('[data-action="drive"]').click()
                 page.wait_for_function("() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').driving === true")
                 page.locator('[data-action="drive"]').click()
