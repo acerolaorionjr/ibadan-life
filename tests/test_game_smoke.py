@@ -62,6 +62,14 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "Bank" in page.locator("#appPanel h3").inner_text()
                 page.locator("#closePhone").click()
 
+                # Without a configured backend, Messages must retain offline NPC interactions.
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="messages"]').click()
+                page.locator('#appPanel [data-app-action="messages"]').click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                assert "neighbours" in page.locator("#lifeDesc").inner_text()
+                page.locator("#closeLife").click()
+
                 page.locator('.bottom button[data-tab="shop"]').click()
                 page.locator("#buyOverlay.show").wait_for(state="visible")
                 page.locator('[data-buy="plant"]').click()
