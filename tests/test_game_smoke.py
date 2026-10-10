@@ -56,6 +56,12 @@ def test_mobile_game_start_buy_mode_and_save():
                 )
                 assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
 
+                # The top finance shortcut must open the bank instead of being a dead button.
+                page.locator("#addMoney").click()
+                page.locator("#phoneOverlay.show").wait_for(state="visible")
+                assert "Bank" in page.locator("#appPanel h3").inner_text()
+                page.locator("#closePhone").click()
+
                 page.locator('.bottom button[data-tab="shop"]').click()
                 page.locator("#buyOverlay.show").wait_for(state="visible")
                 page.locator('[data-buy="plant"]').click()
