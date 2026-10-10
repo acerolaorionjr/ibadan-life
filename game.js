@@ -20,6 +20,32 @@ for(let x=-32;x<=32;x+=4)box('lane',x,.07,0,1.2,.015,.18,mats.yellow);
 for(let z=-32;z<=32;z+=4)box('lane',0,.08,z,.18,.015,1.2,mats.yellow);
 function building(x,z,w,d,h,color,label){const g=new THREE.Group();world.add(g);box(label+' building',x,0,z,w,h,d,new THREE.MeshLambertMaterial({color}),g);box(label+' roof',x,h,z,w+.18,.22,d+.18,mats.roof,g);const sign=textSprite(label,'#ffffff');sign.position.set(x,h+1,z-d/2-.05);g.add(sign);for(let xx=x-w/2+1;xx<x+w/2-.5;xx+=1.5)for(let yy=1.2;yy<h-.5;yy+=1.5)box('window',xx,yy,z-d/2-.03,.65,.55,.05,mats.blue,g);return g}
 building(-15,-14,8,7,4.5,0xd7a26d,'BODIJA MARKET');building(15,-14,8,7,5.5,0xb6c5d3,'UCH');building(-15,14,8,7,4.2,0xd9c57c,'UNIVERSITY');building(15,14,8,7,5.2,0xc8c8ce,'DUGBE MALL');building(-27,0,7,6,3.6,0xb57c55,'HOME');building(27,0,7,6,4.4,0x9bafbd,'OFFICE');
+function makeMarketStall(x,z,canopyColor,signText){
+ const g=new THREE.Group();g.position.set(x,0,z);world.add(g);
+ const canopy=new THREE.MeshLambertMaterial({color:canopyColor});
+ box('market stall counter',0,.7,0,2.5,.25,1.35,new THREE.MeshLambertMaterial({color:0x9c6942}),g);
+ for(const px of [-1.05,1.05])for(const pz of [-.48,.48])box('stall support',px,.75,pz,.09,1.55,.09,mats.dark,g);
+ box('market stall canopy',0,1.65,0,2.8,.18,1.7,canopy,g);
+ box('market stall sign',0,1.92,-.82,2.35,.38,.06,mats.dark,g);
+ const sign=textSprite(signText,'#ffe8a8');sign.scale.set(2.25,.45,1);sign.position.set(0,2.1,-.86);g.add(sign);
+ for(let i=0;i<3;i++){const crate=box('produce crate',-.72+i*.72,.98,.08,.48,.32,.48,new THREE.MeshLambertMaterial({color:[0x4b9b4b,0xd6a33a,0xc95c43][i]}),g);crate.rotation.y=(i-1)*.08}
+ return g
+}
+makeMarketStall(-21,-8,0xd34f42,'FRESH FOOD');
+makeMarketStall(-9,-8,0xe5b94f,'FRUITS');
+makeMarketStall(-22,-19,0x438a62,'GROCERIES');
+const busStop=new THREE.Group();busStop.position.set(6,0,6);world.add(busStop);
+box('bus stop platform',0,.06,0,4.2,.12,1.8,mats.white,busStop);
+for(const x of [-1.8,1.8])box('bus stop post',x,.12,-.45,.12,2.3,.12,mats.dark,busStop);
+box('bus stop roof',0,2.35,-.45,4.4,.2,1.5,mats.blue,busStop);
+const busSign=textSprite('BUS STOP','#ffffff');busSign.position.set(0,2.9,-.45);busStop.add(busSign);
+for(const [x,z] of [[-5,-5],[5,-5],[-5,5],[5,5],[-29,-7],[29,7]]){
+ const lamp=new THREE.Group();lamp.position.set(x,0,z);world.add(lamp);
+ cyl('streetlight pole',0,0,0,.07,4.1,mats.dark,lamp);
+ box('streetlight arm',.45,3.85,0,.95,.09,.09,mats.dark,lamp);
+ const bulb=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshBasicMaterial({color:0xffe7a3}));bulb.position.set(.9,3.82,0);lamp.add(bulb);
+}
+
 for(let i=0;i<24;i++){const x=(i%6)*9-22,z=Math.floor(i/6)*9-22;if(Math.abs(x)<6||Math.abs(z)<6)continue;cyl('tree trunk',x,0,z,.28,1.5,mats.roof);cyl('tree crown',x,1.3,z,1.05,1.7,mats.green)}
 for(let i=-30;i<=30;i+=6){box('curb',i,.12,4.35,4,.18,.35,mats.white);box('curb',i,.12,-4.35,4,.18,.35,mats.white);box('curb',4.35,.12,i,.35,.18,4,mats.white);box('curb',-4.35,.12,i,.35,.18,4,mats.white)}
 const trafficCars=[];
