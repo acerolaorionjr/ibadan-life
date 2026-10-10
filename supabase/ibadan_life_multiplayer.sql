@@ -93,7 +93,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $ibadan$
 declare
   wanted_username text;
   wanted_display text;
@@ -118,7 +118,7 @@ begin
   end;
   return new;
 end;
-$$;
+$ibadan$;
 
 drop trigger if exists ibadan_auth_user_created on auth.users;
 create trigger ibadan_auth_user_created
@@ -248,7 +248,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $ibadan$
 declare
   me uuid := auth.uid();
   conversation uuid;
@@ -277,7 +277,7 @@ begin
   end if;
   return conversation;
 end;
-$$;
+$ibadan$;
 revoke all on function public.ibadan_start_dm(uuid) from public;
 grant execute on function public.ibadan_start_dm(uuid) to authenticated;
 
