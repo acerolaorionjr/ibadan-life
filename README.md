@@ -8,6 +8,7 @@ Play: https://acerolaorionjr.github.io/ibadan-life/
 - 3D Ibadan-inspired city with roads, homes, offices, trees, moving traffic and a day/night cycle.
 - Nearby NPC conversations with persistent friendship progress and social rewards.
 - Objective-based city missions with visible destination markers and in-game rewards.
+- Five-level career progression with shift XP, promotions and increasing pay.
 - Personal vehicle garage, vehicle ownership and drive/park controls.
 - Housing tiers, weekly rent, rent arrears and home upgrades.
 - Touch controls for movement and camera rotation.
