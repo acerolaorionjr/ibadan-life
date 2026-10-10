@@ -5,7 +5,9 @@
 Play: https://acerolaorionjr.github.io/ibadan-life/
 
 ## Included
-- 3D Ibadan-inspired city with roads, homes, offices, trees, moving traffic and a day/night cycle.
+- 3D Ibadan-inspired city with roads, homes, offices, original market stalls, a bus stop, street lights, moving traffic and a day/night cycle.
+- NPCs move between home areas, markets, campus and city destinations as the in-game day changes.
+- Rent a city billboard for seven in-game days to advertise an owned business using game currency.
 - Nearby NPC conversations with persistent friendship progress and social rewards.
 - Objective-based city missions with visible destination markers and in-game rewards.
 - Five-level career progression with shift XP, promotions and increasing pay.
@@ -25,4 +27,4 @@ Serve this folder with any static HTTP server and open `index.html` through that
 This repository deploys independently to GitHub Pages through `.github/workflows/deploy-pages.yml`.
 
 ## Verification status
-GitHub Actions checks JavaScript syntax, required files and a mobile-browser smoke test covering game start, Buy Mode/save persistence, missions, garage/vehicle controls, NPC friendship and housing. Real-device gameplay, performance and touch controls should still be tested in Android Chrome after deployment.
+GitHub Actions checks JavaScript syntax, required files and a mobile-browser smoke test covering game start, Buy Mode/save persistence, missions, garage/vehicle controls, NPC friendship, housing, business ownership and billboard rental. Real-device gameplay, performance and touch controls should still be tested in Android Chrome after deployment.
