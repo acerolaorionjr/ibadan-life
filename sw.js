@@ -1,12 +1,36 @@
-const CACHE='ibadan-life-v16';
+const CACHE='ibadan-life-v17';
 const CORE=['./','./index.html','./game.js','./manifest.json'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch',e=>{
- if(e.request.method!=='GET') return;
- e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(res=>{
-   const copy=res.clone();
-   if(new URL(e.request.url).origin===location.origin) caches.open(CACHE).then(c=>c.put(e.request,copy));
-   return res;
- }).catch(()=>cached)));
+
+self.addEventListener('install',event=>{
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache=>cache.addAll(CORE))
+      .then(()=>self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate',event=>{
+  event.waitUntil(
+    caches.keys()
+      .then(keys=>Promise.all(keys.filter(key=>key.startsWith('ibadan-life-')&&key!==CACHE).map(key=>caches.delete(key))))
+      .then(()=>self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch',event=>{
+  if(event.request.method!=='GET') return;
+  const requestUrl=new URL(event.request.url);
+  if(requestUrl.origin!==self.location.origin) return;
+  event.respondWith(
+    caches.match(event.request).then(cached=>{
+      const network=fetch(event.request).then(response=>{
+        if(response&&response.ok){
+          const copy=response.clone();
+          caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{});
+        }
+        return response;
+      });
+      return network.catch(()=>cached||Response.error());
+    })
+  );
 });
