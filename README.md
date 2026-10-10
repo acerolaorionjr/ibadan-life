@@ -5,11 +5,15 @@
 Play: https://acerolaorionjr.github.io/ibadan-life/
 
 ## Included
-- 3D Ibadan-inspired city with roads, homes, offices, trees and NPCs.
+- 3D Ibadan-inspired city with roads, homes, offices, trees, moving traffic and a day/night cycle.
+- Nearby NPC conversations with persistent friendship progress and social rewards.
+- Objective-based city missions with visible destination markers and in-game rewards.
+- Personal vehicle garage, vehicle ownership and drive/park controls.
+- Housing tiers, weekly rent, rent arrears and home upgrades.
 - Touch controls for movement and camera rotation.
 - Five starting backgrounds: Lapo, Average, Comfortable, Nepo Baby and Wealthy.
 - Character-start choices affect money, debt, family support, home, vehicle, reputation and starting location.
-- In-game phone with Jobs, Messages, Bank, Ride, Boutique, Food, Business, Advertising, Investments, Map, Travel and Events.
+- In-game phone with Jobs, Messages, Bank, Ride, Boutique, Food, Business, Advertising, Investments, Map, Travel, Events, Missions, Garage and Housing.
 - Buy mode / catalogue and local browser persistence.
 - Installable progressive web app support.
 
@@ -20,4 +24,4 @@ Serve this folder with any static HTTP server and open `index.html` through that
 This repository deploys independently to GitHub Pages through `.github/workflows/deploy-pages.yml`.
 
 ## Verification status
-GitHub Actions checks JavaScript syntax and required files before deployment. Real-device gameplay, performance and touch controls should also be tested in Android Chrome after deployment.
+GitHub Actions checks JavaScript syntax, required files and a mobile-browser smoke test covering game start, Buy Mode/save persistence, missions, garage/vehicle controls, NPC friendship and housing. Real-device gameplay, performance and touch controls should still be tested in Android Chrome after deployment.
