@@ -107,6 +107,33 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator("#lifeModal.show").wait_for(state="visible")
                 assert "Modest apartment" in page.locator("#lifeTitle").inner_text()
                 page.locator("#closeLife").click()
+
+                page.evaluate("""() => {
+                    const save = JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}');
+                    save.money = 500000;
+                    localStorage.setItem('ibadanLifeSave', JSON.stringify(save));
+                }""")
+                page.reload(wait_until="domcontentloaded")
+                page.wait_for_function(
+                    "() => document.querySelector('#startScreen').style.display === 'none'",
+                    timeout=15000,
+                )
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="business"]').click()
+                page.locator('#appPanel [data-app-action="business"]').first.click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                page.locator("#lifeChoices .choice").first.click()
+                page.wait_for_function(
+                    "() => JSON.parse(localStorage.getItem('ibadanLifeBusinesses') || '[]').length === 1"
+                )
+                page.locator('.bottom button[data-tab="phone"]').click()
+                page.locator('.phoneGrid [data-app="advertise"]').click()
+                page.locator('#appPanel [data-app-action="advertise"]').first.click()
+                page.locator("#lifeModal.show").wait_for(state="visible")
+                page.locator("#lifeChoices .choice").first.click()
+                page.wait_for_function(
+                    "() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').billboardAd === 'Mini-mart'"
+                )
                 assert not errors, "Browser runtime errors: " + " | ".join(errors)
                 context.close()
                 browser.close()
