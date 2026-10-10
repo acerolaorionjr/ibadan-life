@@ -125,6 +125,26 @@ create trigger ibadan_auth_user_created
 after insert on auth.users
 for each row execute function public.ibadan_create_profile();
 
+create or replace function public.ibadan_is_blocked(user_a uuid, user_b uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $ibadan$
+  select case
+    when auth.uid() is null then false
+    when user_a <> (select auth.uid()) and user_b <> (select auth.uid()) then false
+    else exists (
+      select 1 from public.ibadan_blocks b
+      where (b.blocker_id = user_a and b.blocked_id = user_b)
+         or (b.blocker_id = user_b and b.blocked_id = user_a)
+    )
+  end;
+$ibadan$;
+revoke all on function public.ibadan_is_blocked(uuid, uuid) from public;
+grant execute on function public.ibadan_is_blocked(uuid, uuid) to authenticated;
+
 -- Policies: public directory is visible only to signed-in players.
 drop policy if exists "ibadan_profiles_read_signed_in" on public.ibadan_profiles;
 create policy "ibadan_profiles_read_signed_in" on public.ibadan_profiles
@@ -167,22 +187,14 @@ drop policy if exists "ibadan_room_messages_read" on public.ibadan_room_messages
 create policy "ibadan_room_messages_read" on public.ibadan_room_messages
 for select to authenticated using (
   exists (select 1 from public.ibadan_chat_rooms r where r.id = room_id and r.active)
-  and not exists (
-    select 1 from public.ibadan_blocks b
-    where (b.blocker_id = (select auth.uid()) and b.blocked_id = sender_id)
-       or (b.blocker_id = sender_id and b.blocked_id = (select auth.uid()))
-  )
+  and not public.ibadan_is_blocked((select auth.uid()), sender_id)
 );
 drop policy if exists "ibadan_room_messages_insert" on public.ibadan_room_messages;
 create policy "ibadan_room_messages_insert" on public.ibadan_room_messages
 for insert to authenticated with check (
   sender_id = (select auth.uid())
   and exists (select 1 from public.ibadan_chat_rooms r where r.id = room_id and r.active)
-  and not exists (
-    select 1 from public.ibadan_blocks b
-    where (b.blocker_id = (select auth.uid()) and b.blocked_id = sender_id)
-       or (b.blocker_id = sender_id and b.blocked_id = (select auth.uid()))
-  )
+  and not public.ibadan_is_blocked((select auth.uid()), sender_id)
 );
 grant select, insert on public.ibadan_room_messages to authenticated;
 
@@ -217,11 +229,7 @@ drop policy if exists "ibadan_dm_messages_read" on public.ibadan_dm_messages;
 create policy "ibadan_dm_messages_read" on public.ibadan_dm_messages
 for select to authenticated using (
   public.ibadan_is_dm_member(ibadan_dm_messages.conversation_id, (select auth.uid()))
-  and not exists (
-    select 1 from public.ibadan_blocks b
-    where (b.blocker_id = (select auth.uid()) and b.blocked_id = sender_id)
-       or (b.blocker_id = sender_id and b.blocked_id = (select auth.uid()))
-  )
+  and not public.ibadan_is_blocked((select auth.uid()), sender_id)
 );
 drop policy if exists "ibadan_dm_messages_insert" on public.ibadan_dm_messages;
 create policy "ibadan_dm_messages_insert" on public.ibadan_dm_messages
@@ -231,13 +239,9 @@ for insert to authenticated with check (
     where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id = (select auth.uid()))
   and not exists (
     select 1 from public.ibadan_dm_members m
-    join public.ibadan_blocks b on b.blocker_id = m.user_id and b.blocked_id = (select auth.uid())
-    where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id <> (select auth.uid())
-  )
-  and not exists (
-    select 1 from public.ibadan_dm_members m
-    join public.ibadan_blocks b on b.blocker_id = (select auth.uid()) and b.blocked_id = m.user_id
-    where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id <> (select auth.uid())
+    where m.conversation_id = ibadan_dm_messages.conversation_id
+      and m.user_id <> (select auth.uid())
+      and public.ibadan_is_blocked((select auth.uid()), m.user_id)
   )
 );
 grant select, insert on public.ibadan_dm_messages to authenticated;
@@ -258,9 +262,7 @@ begin
   if not exists (select 1 from public.ibadan_profiles p where p.id = other_user) then
     raise exception 'Player not found';
   end if;
-  if exists (select 1 from public.ibadan_blocks b where
-    (b.blocker_id = me and b.blocked_id = other_user) or
-    (b.blocker_id = other_user and b.blocked_id = me)) then
+  if public.ibadan_is_blocked(me, other_user) then
     raise exception 'Messaging is unavailable for this player';
   end if;
   select mine.conversation_id into conversation
