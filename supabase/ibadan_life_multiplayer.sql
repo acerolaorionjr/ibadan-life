@@ -107,9 +107,15 @@ begin
   end if;
   wanted_username := left(wanted_username, 20);
   wanted_display := left(coalesce(nullif(trim(new.raw_user_meta_data->>'display_name'), ''), 'Player'), 24);
-  insert into public.ibadan_profiles(id, username, display_name)
-  values (new.id, wanted_username, wanted_display)
-  on conflict (id) do nothing;
+  begin
+    insert into public.ibadan_profiles(id, username, display_name)
+    values (new.id, wanted_username, wanted_display)
+    on conflict (id) do nothing;
+  exception when unique_violation then
+    insert into public.ibadan_profiles(id, username, display_name)
+    values (new.id, 'player_' || left(replace(new.id::text, '-', ''), 12), wanted_display)
+    on conflict (id) do nothing;
+  end;
   return new;
 end;
 $$;
@@ -180,28 +186,37 @@ for insert to authenticated with check (
 );
 grant select, insert on public.ibadan_room_messages to authenticated;
 
+create or replace function public.ibadan_is_dm_member(target_conversation uuid, target_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select exists (select 1 from public.ibadan_dm_members m
+    where m.conversation_id = target_conversation and m.user_id = target_user);
+$;
+revoke all on function public.ibadan_is_dm_member(uuid, uuid) from public;
+grant execute on function public.ibadan_is_dm_member(uuid, uuid) to authenticated;
+
 drop policy if exists "ibadan_dm_members_read" on public.ibadan_dm_members;
 create policy "ibadan_dm_members_read" on public.ibadan_dm_members
 for select to authenticated using (
-  exists (select 1 from public.ibadan_dm_members mine
-    where mine.conversation_id = ibadan_dm_members.conversation_id
-      and mine.user_id = (select auth.uid()))
+  public.ibadan_is_dm_member(ibadan_dm_members.conversation_id, (select auth.uid()))
 );
 grant select on public.ibadan_dm_members to authenticated;
 
 drop policy if exists "ibadan_dm_conversations_read" on public.ibadan_dm_conversations;
 create policy "ibadan_dm_conversations_read" on public.ibadan_dm_conversations
 for select to authenticated using (
-  exists (select 1 from public.ibadan_dm_members m
-    where m.conversation_id = id and m.user_id = (select auth.uid()))
+  public.ibadan_is_dm_member(ibadan_dm_conversations.id, (select auth.uid()))
 );
 grant select on public.ibadan_dm_conversations to authenticated;
 
 drop policy if exists "ibadan_dm_messages_read" on public.ibadan_dm_messages;
 create policy "ibadan_dm_messages_read" on public.ibadan_dm_messages
 for select to authenticated using (
-  exists (select 1 from public.ibadan_dm_members m
-    where m.conversation_id = conversation_id and m.user_id = (select auth.uid()))
+  public.ibadan_is_dm_member(ibadan_dm_messages.conversation_id, (select auth.uid()))
   and not exists (
     select 1 from public.ibadan_blocks b
     where (b.blocker_id = (select auth.uid()) and b.blocked_id = sender_id)
@@ -217,12 +232,12 @@ for insert to authenticated with check (
   and not exists (
     select 1 from public.ibadan_dm_members m
     join public.ibadan_blocks b on b.blocker_id = m.user_id and b.blocked_id = (select auth.uid())
-    where m.conversation_id = conversation_id and m.user_id <> (select auth.uid())
+    where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id <> (select auth.uid())
   )
   and not exists (
     select 1 from public.ibadan_dm_members m
     join public.ibadan_blocks b on b.blocker_id = (select auth.uid()) and b.blocked_id = m.user_id
-    where m.conversation_id = conversation_id and m.user_id <> (select auth.uid())
+    where m.conversation_id = ibadan_dm_messages.conversation_id and m.user_id <> (select auth.uid())
   )
 );
 grant select, insert on public.ibadan_dm_messages to authenticated;
