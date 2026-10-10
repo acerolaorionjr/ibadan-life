@@ -1,4 +1,4 @@
-const CACHE='ibadan-life-v15';
+const CACHE='ibadan-life-v16';
 const CORE=['./','./index.html','./game.js','./manifest.json'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
