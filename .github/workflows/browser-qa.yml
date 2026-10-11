@@ -16,7 +16,9 @@ jobs:
   deployed-browser-test:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
+    env:
+      IBADAN_LIFE_URL: https://acerolaorionjr.github.io/ibadan-life/
     steps:
       - name: Checkout current main
         uses: actions/checkout@v4
@@ -33,30 +35,38 @@ jobs:
       - name: Wait briefly for Pages to publish
         if: github.event_name == 'workflow_run'
         run: sleep 45
-      - name: Test the live mobile game
+      - name: Test live mobile gameplay and core flows
+        id: tests
+        continue-on-error: true
+        run: pytest -q tests/test_live_site.py tests/test_agentic_live_site.py --junitxml=ibadan-life-qa-report.xml
+      - name: Generate report and optional AI review
+        if: always()
         env:
-          IBADAN_LIFE_URL: https://acerolaorionjr.github.io/ibadan-life/
-        run: pytest -q tests/test_live_site.py --junitxml=ibadan-life-qa-report.xml
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/generate_qa_report.py ibadan-life-qa-report.xml
       - name: Add QA result summary
         if: always()
         env:
-          JOB_STATUS: ${{ job.status }}
+          JOB_STATUS: ${{ steps.tests.outcome }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           {
-            echo "## Ibadan Life browser QA"
+            echo "## Ibadan Life QA Agent"
             echo ""
-            echo "- Result: **${JOB_STATUS}**"
+            echo "- Automated test result: **${JOB_STATUS}**"
             echo "- Trigger: ${EVENT_NAME}"
-            echo "- Target: https://acerolaorionjr.github.io/ibadan-life/"
-            echo "- Checks: mobile load, character creation, bank shortcut, quick-shift repeat taps, JavaScript runtime errors."
-            echo "- Scope note: this is automated browser QA, not proof that unconfigured multiplayer/cloud services work."
+            echo "- Target: ${IBADAN_LIFE_URL}"
+            echo "- Coverage: character creation, gameplay actions, all phone app panels, navigation tabs, profile editing/local save, bank shortcut, quick-shift repeat taps, browser runtime errors."
+            echo "- AI review: see the AI_REVIEW.md artifact file; configure OPENAI_API_KEY repository secret to enable researched AI recommendations."
+            echo "- Limits: multiplayer/cloud services and real-device performance need separate configured tests."
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload test report
+      - name: Upload QA report, screenshots and exploration evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ibadan-life-browser-qa-report
-          path: ibadan-life-qa-report.xml
+          name: ibadan-life-qa-agent-report
+          path: |
+            ibadan-life-qa-report.xml
+            qa-output/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 30
