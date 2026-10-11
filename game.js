@@ -112,7 +112,56 @@ function relationshipAction(name,friendGain,socialGain,repGain,message){
  social=Math.min(100,social+socialGain);fun=Math.min(100,fun+Math.ceil(friendGain/2));rep=Math.min(5,rep+repGain*.01);
  localStorage.setItem('ibadanLifeRelationships',JSON.stringify(relationships));toast('💬 '+message);renderUI();saveGame()
 }
-function action(a){if(a==='drive'){toggleDrive()}if(a==='interact'){interactWithNearestNPC()}if(a==='eat'){hunger=Math.min(100,hunger+25);money=Math.max(0,money-500);$('task').textContent='Enjoy lunch';toast('🍛 You ate a local meal · −₦500')}if(a==='rest'){energy=Math.min(100,energy+28);toast('😴 You rested')}if(a==='toilet'){bladder=100;hygiene=Math.max(0,hygiene-1);toast('🚻 You used the bathroom')}if(a==='social'){social=Math.min(100,social+20);fun=Math.min(100,fun+10);toast('💬 You made time for people')}if(a==='study'){progress=Math.min(100,progress+8);energy=Math.max(0,energy-7);toast('📚 Study session complete')}if(a==='work'){if(energy<12){toast('😴 You need at least 12 energy for a shift. Rest first.')}else if(gameMinutes-lastQuickShiftAt<120){const wait=Math.ceil((120-(gameMinutes-lastQuickShiftAt))/60);toast('⏳ Your next quick shift is available in about '+wait+' in-game hour(s).')}else{lastQuickShiftAt=gameMinutes;progress=Math.min(100,progress+15);money+=2500;energy=Math.max(0,energy-12);hunger=Math.max(0,hunger-8);rep=Math.min(5,rep+(progress>70?.05:0));toast('💼 Shift complete · +₦2,500');$('task').textContent=progress>85?'Go home':'Next: assignment';saveGame()}}renderUI()}
+function hasTrait(name){return playerProfile.trait1===name||playerProfile.trait2===name}
+function advanceActivity(minutes){
+ const m=Math.max(0,Number(minutes)||0);if(!m)return;
+ gameMinutes+=m;
+ // Activities use the same needs-per-game-minute rates as the running simulation.
+ hunger=Math.max(0,hunger-m*(.45/2.2));
+ energy=Math.max(0,energy-m*(.25/2.2));
+ fun=Math.max(0,fun-m*(.12/2.2));
+ social=Math.max(0,social-m*(.08/2.2));
+ hygiene=Math.max(0,hygiene-m*(.1/2.2));
+ bladder=Math.max(0,bladder-m*(.14/2.2));
+ processRent();
+ if(billboardAd&&gameMinutes>=billboardExpires){billboardAd=null;billboardExpires=0;refreshBillboardVisual();toast('📢 Your city billboard rental expired')}
+ if((hunger<8&&energy<8)||health<20)health=Math.max(0,health-m*.015);
+}
+function action(a){
+ if(a==='drive'){toggleDrive();return}
+ if(a==='interact'){interactWithNearestNPC();return}
+ if(a==='eat'){
+  if(money<500){toast('💸 You need ₦500 for a meal');return}
+  money-=500;advanceActivity(20);hunger=Math.min(100,hunger+25);
+  $('task').textContent='Meal finished · plan your next activity';toast('🍛 You ate a local meal · −₦500');
+ }
+ if(a==='rest'){
+  advanceActivity(90);energy=Math.min(100,energy+28);
+  $('task').textContent='Rested · check your needs before the next shift';toast('😴 You rested for 1 hour 30 minutes');
+ }
+ if(a==='toilet'){
+  advanceActivity(5);bladder=100;hygiene=Math.max(0,hygiene-1);
+  toast('🚻 You used the bathroom');
+ }
+ if(a==='social'){
+  advanceActivity(30);social=Math.min(100,social+20+(hasTrait('Friendly')?5:0));fun=Math.min(100,fun+10);
+  $('task').textContent='Social time complete';toast('💬 You made time for people');
+ }
+ if(a==='study'){
+  if(energy<12){toast('😴 You are too tired to study properly. Rest first.');return}
+  advanceActivity(60);progress=Math.min(100,progress+(hasTrait('Hardworking')?11:hasTrait('Creative')?10:8));energy=Math.max(0,energy-7);
+  $('task').textContent='Study session complete · keep building your skills';toast('📚 You studied for 1 hour');
+ }
+ if(a==='work'){
+  if(energy<26){toast('😴 You need more energy for a full shift. Rest first.');return}
+  if(gameMinutes-lastQuickShiftAt<240){const wait=Math.ceil((240-(gameMinutes-lastQuickShiftAt))/60);toast('⏳ Your next quick shift is available in about '+wait+' in-game hour(s).');return}
+  lastQuickShiftAt=gameMinutes;advanceActivity(120);
+  const pay=hasTrait('Hardworking')?2750:2500;
+  progress=Math.min(100,progress+(hasTrait('Hardworking')?18:15));money+=pay;energy=Math.max(0,energy-12);hunger=Math.max(0,hunger-8);rep=Math.min(5,rep+(progress>70?.05:0));
+  toast('💼 Two-hour quick shift complete · +'+moneyText(pay));$('task').textContent=progress>85?'Go home':'Next: assignment';
+ }
+ renderUI();saveGame();
+}
 const phone=$('phoneOverlay'), appPanel=$('appPanel');
 const appCopy={
  profile:['My Account','View and edit your local character profile, appearance, traits and lifetime dream.',['Open profile']],
@@ -201,7 +250,7 @@ function lifeModal(title,desc,choices){$('phoneOverlay').classList.remove('show'
 function closeLife(){$('lifeModal').classList.remove('show');$('lifeModal').setAttribute('aria-hidden','true')}
 $('closeLife').addEventListener('click',closeLife);
 function handleAppAction(name,label){
- if(name==='jobs'){lifeModal('💼 Jobs & careers','Complete shifts to earn money and gain career XP. Every career has five levels, and promotions increase pay.',JOBS.map(j=>{const cp=careerProgress[j.id]||{level:1,xp:0};const pay=Math.round(j.pay*(1+(cp.level-1)*.2));return {title:j.name+' · '+moneyText(pay),desc:j.desc+' Career level '+cp.level+'/5 · '+cp.xp+'/3 shift XP. Reputation required: '+j.req,run:()=>{if(rep<j.req){toast('🔒 Build reputation to unlock this job');return}currentJob=j;money+=pay;energy=Math.max(0,energy-j.energy);progress=Math.min(100,progress+6);rep=Math.min(5,rep+.08);const next=careerProgress[j.id]||{level:1,xp:0};next.xp++;if(next.xp>=3&&next.level<5){next.level++;next.xp=0;toast('🎉 Promotion! '+j.name+' is now level '+next.level)}else{toast('💼 '+j.name+' shift complete · +'+moneyText(pay))}careerProgress[j.id]=next;renderUI();saveGame()}}}))}
+ if(name==='jobs'){lifeModal('💼 Jobs & careers','A shift takes two in-game hours and uses energy. Higher levels increase pay; traits can improve your results.',JOBS.map(j=>{const cp=careerProgress[j.id]||{level:1,xp:0};const basePay=Math.round(j.pay*(1+(cp.level-1)*.2));const pay=Math.round(basePay*(hasTrait('Hardworking')?1.05:1));return {title:j.name+' · '+moneyText(pay),desc:j.desc+' · 2-hour shift · Career level '+cp.level+'/5 · '+cp.xp+'/3 shift XP · Reputation required: '+j.req,run:()=>{if(rep<j.req){toast('🔒 Build reputation to unlock this job');return}if(energy<j.energy+14){toast('😴 Rest first: this shift needs more energy');return}currentJob=j;advanceActivity(120);energy=Math.max(0,energy-j.energy);money+=pay;progress=Math.min(100,progress+(hasTrait('Hardworking')?8:6));rep=Math.min(5,rep+(hasTrait('Ambitious')?.12:.08));const next=careerProgress[j.id]||{level:1,xp:0};next.xp++;if(next.xp>=3&&next.level<5){next.level++;next.xp=0;toast('🎉 Promotion! '+j.name+' is now level '+next.level)}else{toast('💼 Two-hour '+j.name+' shift complete · +'+moneyText(pay))}careerProgress[j.id]=next;renderUI();saveGame()}}}))}
  else if(name==='bank'){if(label.includes('Deposit')){const n=Math.min(5000,money);money-=n;bankSavings+=n;toast('🏦 Saved '+moneyText(n))}else if(label.includes('Repay')){const n=Math.min(5000,bankDebt,money);money-=n;bankDebt-=n;toast(n?'🏦 Debt repayment · '+moneyText(n):'🏦 Nothing to repay')}else{toast('🏦 Balance '+moneyText(money)+' · Debt '+moneyText(bankDebt)+' · Savings '+moneyText(bankSavings))}renderUI()}
  else if(name==='shop'){openBuyMode()}else if(name==='wardrobe'){openWardrobe()}else if(name==='ride'){lifeModal('🚕 Choose your ride','Fares are paid from your in-game balance.',[{title:'Walk · Free',desc:'Travel to a nearby district',run:()=>moveToDistrict(0,0,'Nearby street',0)},{title:'Danfo bus · ₦300',desc:'Affordable public transport',run:()=>moveToDistrict(-15,-14,'Bodija Market',300)},{title:'Keke · ₦700',desc:'Quick neighbourhood trip',run:()=>moveToDistrict(15,-14,'UCH district',700)},{title:'Okada · ₦1,000',desc:'Fast trip across town',run:()=>moveToDistrict(-15,14,'University area',1000)},{title:'Cab · ₦2,500',desc:'Comfortable direct ride',run:()=>moveToDistrict(15,14,'Dugbe Mall',2500)}])}
  else if(name==='travel'){lifeModal('🚌 Interstate travel','Choose a Nigerian destination. This prototype simulates the journey and fare; full separate city maps are a later update.',[{title:'Abeokuta · ₦4,000',desc:'Ogun State · short trip',run:()=>simulateTrip('Abeokuta',4000,60)},{title:'Osogbo · ₦3,500',desc:'Osun State',run:()=>simulateTrip('Osogbo',3500,55)},{title:'Lagos · ₦12,000',desc:'Lagos State · longer trip',run:()=>simulateTrip('Lagos',12000,180)},{title:'Ilorin · ₦6,000',desc:'Kwara State',run:()=>simulateTrip('Ilorin',6000,120)}])}
