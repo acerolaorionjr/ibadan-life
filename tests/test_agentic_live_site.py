@@ -53,6 +53,22 @@ def test_mobile_life_simulation_exploration():
                 heading = page.locator("#appPanel h3")
                 assert heading.count() > 0 and heading.first.inner_text().strip(), f"App '{name}' failed to render a heading"
                 results["tested_apps"].append({"app": name, "heading": heading.first.inner_text().strip()})
+                # Try the primary action for each app. In a fresh test context,
+                # any simulated purchases or edits cannot affect a real player.
+                primary = page.locator(f'[data-app-action="{name}"]')
+                if primary.count():
+                    action_label = primary.first.inner_text().strip()
+                    primary.first.click(timeout=5000)
+                    results["tested_actions"].append(f"app:{name}:{action_label}")
+                    if page.locator("#lifeModal.show").count():
+                        choice = page.locator("#lifeChoices .choice")
+                        if choice.count():
+                            choice.first.click(timeout=5000)
+                    if page.locator("#buyOverlay.show").count():
+                        page.locator("#closeBuy").click(timeout=5000)
+                    if page.locator("#lifeModal.show").count():
+                        page.locator("#closeLife").click(timeout=5000)
+                    page.wait_for_timeout(100)
             page.locator("#closePhone").click()
             for tab in page.locator(".bottom button").all():
                 name = tab.get_attribute("data-tab")
