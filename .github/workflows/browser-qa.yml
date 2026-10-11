@@ -70,3 +70,6 @@ jobs:
             qa-output/
           if-no-files-found: ignore
           retention-days: 30
+      - name: Fail if browser QA found problems
+        if: always() && steps.tests.outcome == 'failure'
+        run: exit 1
