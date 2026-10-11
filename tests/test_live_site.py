@@ -51,6 +51,20 @@ def test_deployed_game_starts_and_core_controls_work():
         assert "Bank" in page.locator("#appPanel h3").inner_text()
         after = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
         assert after == before, f"Tapping the bank shortcut changed money unexpectedly: {before} -> {after}"
+        page.locator("#closePhone").click()
+
+        # Quick shift should pay once, then enforce its cooldown on rapid repeated taps.
+        before_shift = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
+        page.locator('[data-action="work"]').click()
+        after_first_shift = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
+        page.locator('[data-action="work"]').click()
+        after_second_tap = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
+        assert after_first_shift in (before_shift, before_shift + 2500), (
+            f"Unexpected first shift balance: {before_shift} -> {after_first_shift}"
+        )
+        assert after_second_tap == after_first_shift, (
+            f"Repeated quick-shift tap paid twice: {after_first_shift} -> {after_second_tap}"
+        )
 
         # Capture runtime exceptions so the report fails on actual browser errors.
         assert not errors, "Browser runtime errors: " + " | ".join(errors)
