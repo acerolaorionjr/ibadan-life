@@ -128,7 +128,7 @@ function advanceActivity(minutes){
  if((hunger<8&&energy<8)||health<20)health=Math.max(0,health-m*.015);
 }
 function action(a){
- if(a==='drive'){toggleDrive();return}
+ if(a==='drive'){toggleDrive();renderUI();saveGame();return}
  if(a==='interact'){interactWithNearestNPC();return}
  if(a==='eat'){
   if(money<500){toast('💸 You need ₦500 for a meal');return}
@@ -156,9 +156,8 @@ function action(a){
   if(energy<26){toast('😴 You need more energy for a full shift. Rest first.');return}
   if(gameMinutes-lastQuickShiftAt<240){const wait=Math.ceil((240-(gameMinutes-lastQuickShiftAt))/60);toast('⏳ Your next quick shift is available in about '+wait+' in-game hour(s).');return}
   lastQuickShiftAt=gameMinutes;advanceActivity(120);
-  const pay=hasTrait('Hardworking')?2750:2500;
-  progress=Math.min(100,progress+(hasTrait('Hardworking')?18:15));money+=pay;energy=Math.max(0,energy-12);hunger=Math.max(0,hunger-8);rep=Math.min(5,rep+(progress>70?.05:0));
-  toast('💼 Two-hour quick shift complete · +'+moneyText(pay));$('task').textContent=progress>85?'Go home':'Next: assignment';
+  progress=Math.min(100,progress+(hasTrait('Hardworking')?18:15));money+=2500;energy=Math.max(0,energy-12);hunger=Math.max(0,hunger-8);rep=Math.min(5,rep+(progress>70?.05:0));
+  toast('💼 Two-hour quick shift complete · +₦2,500');$('task').textContent=progress>85?'Go home':'Next: assignment';
  }
  renderUI();saveGame();
 }
