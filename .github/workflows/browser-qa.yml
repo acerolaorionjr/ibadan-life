@@ -1,0 +1,62 @@
+name: Ibadan Life browser QA
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_run:
+    workflows: ["Deploy Ibadan Life to GitHub Pages"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deployed-browser-test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install browser test tools
+        run: |
+          python -m pip install --disable-pip-version-check pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Wait briefly for Pages to publish
+        if: github.event_name == 'workflow_run'
+        run: sleep 45
+      - name: Test the live mobile game
+        env:
+          IBADAN_LIFE_URL: https://acerolaorionjr.github.io/ibadan-life/
+        run: pytest -q tests/test_live_site.py --junitxml=ibadan-life-qa-report.xml
+      - name: Add QA result summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          {
+            echo "## Ibadan Life browser QA"
+            echo ""
+            echo "- Result: **${JOB_STATUS}**"
+            echo "- Trigger: ${EVENT_NAME}"
+            echo "- Target: https://acerolaorionjr.github.io/ibadan-life/"
+            echo "- Checks: mobile load, character creation, bank shortcut, quick-shift repeat taps, JavaScript runtime errors."
+            echo "- Scope note: this is automated browser QA, not proof that unconfigured multiplayer/cloud services work."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibadan-life-browser-qa-report
+          path: ibadan-life-qa-report.xml
+          if-no-files-found: ignore
+          retention-days: 14
