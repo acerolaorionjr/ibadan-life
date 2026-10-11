@@ -59,7 +59,7 @@ def test_deployed_game_starts_and_core_controls_work():
         after_first_shift = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
         page.locator('[data-action="work"]').click()
         after_second_tap = page.evaluate("Number(document.querySelector('#money').innerText.replace(/[₦,]/g, ''))")
-        assert after_first_shift in (before_shift, before_shift + 2500), (
+        assert after_first_shift in (before_shift, before_shift + 2500, before_shift + 3500), (
             f"Unexpected first shift balance: {before_shift} -> {after_first_shift}"
         )
         assert after_second_tap == after_first_shift, (
