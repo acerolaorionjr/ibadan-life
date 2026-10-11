@@ -1,5 +1,5 @@
-const CACHE='ibadan-life-v17';
-const CORE=['./','./index.html','./game.js','./manifest.json'];
+const CACHE='ibadan-life-v18';
+const CORE=['./','./index.html','./game.js','./manifest.json','./multiplayer.js','./multiplayer.css','./multiplayer-config.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(
