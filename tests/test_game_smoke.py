@@ -58,9 +58,12 @@ def test_mobile_game_start_buy_mode_and_save():
 
                 # A quick shift pays once, then blocks repeated taps during its cooldown.
                 starting_money = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                starting_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
                 page.locator('[data-action="work"]').click()
                 after_first_shift = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                after_shift_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
                 assert after_first_shift == starting_money + 2500
+                assert after_shift_time >= starting_time + 120
                 page.locator('[data-action="work"]').click()
                 after_second_tap = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
                 assert after_second_tap == after_first_shift
