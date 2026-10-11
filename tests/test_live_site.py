@@ -9,9 +9,9 @@ except ImportError:
     sync_playwright = None
 
 
-@pytest.mark.skipif(sync_playwright is None, reason="Playwright is not installed")
+@pytest.mark.skipif(sync_playwright is None or not os.environ.get("IBADAN_LIFE_URL"), reason="Set IBADAN_LIFE_URL to run deployed-site QA")
 def test_deployed_game_starts_and_core_controls_work():
-    base_url = os.environ.get("IBADAN_LIFE_URL", "https://acerolaorionjr.github.io/ibadan-life/")
+    base_url = os.environ["IBADAN_LIFE_URL"]
     parts = urlsplit(base_url)
     query = dict(parse_qsl(parts.query))
     query["test"] = "1"
