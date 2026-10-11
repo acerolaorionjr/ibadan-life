@@ -56,6 +56,15 @@ def test_mobile_game_start_buy_mode_and_save():
                 )
                 assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
 
+                # A quick shift pays once, then blocks repeated taps during its cooldown.
+                starting_money = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                page.locator('[data-action="work"]').click()
+                after_first_shift = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                assert after_first_shift == starting_money + 2500
+                page.locator('[data-action="work"]').click()
+                after_second_tap = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                assert after_second_tap == after_first_shift
+
                 # The top finance shortcut must open the bank instead of being a dead button.
                 page.locator("#addMoney").click()
                 page.locator("#phoneOverlay.show").wait_for(state="visible")
