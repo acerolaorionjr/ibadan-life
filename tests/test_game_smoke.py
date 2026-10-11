@@ -62,7 +62,7 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator('[data-action="work"]').click()
                 after_first_shift = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
                 after_shift_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
-                assert after_first_shift == starting_money + 2500
+                assert after_first_shift == starting_money + 3500
                 assert after_shift_time >= starting_time + 120
                 page.locator('[data-action="work"]').click()
                 after_second_tap = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
