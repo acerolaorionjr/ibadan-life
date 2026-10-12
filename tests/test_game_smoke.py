@@ -44,6 +44,8 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{port}/index.html?test=1", wait_until="domcontentloaded")
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
+                page.locator("#beginNewLife").click()
+                page.locator("#characterName").wait_for(state="visible")
                 page.locator("#characterName").fill("Test Sim")
                 page.locator("#characterGender").select_option("Woman")
                 page.locator("#rollBackground").click()
@@ -92,6 +94,8 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "plant" not in page.evaluate("localStorage.getItem('ibadanLifeInventory') || ''")
                 page.wait_for_timeout(3500)
                 page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#continueLife").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'",
                     timeout=15000,
@@ -149,6 +153,8 @@ def test_mobile_game_start_buy_mode_and_save():
                     localStorage.setItem('ibadanLifeSave', JSON.stringify(save));
                 }""")
                 page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#continueLife").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'",
                     timeout=15000,
