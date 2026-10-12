@@ -1,0 +1,75 @@
+name: Ibadan Life browser QA
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_run:
+    workflows: ["Deploy Ibadan Life to GitHub Pages"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deployed-browser-test:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      IBADAN_LIFE_URL: https://acerolaorionjr.github.io/ibadan-life/
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install browser test tools
+        run: |
+          python -m pip install --disable-pip-version-check pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Wait briefly for Pages to publish
+        if: github.event_name == 'workflow_run'
+        run: sleep 45
+      - name: Test live mobile gameplay and core flows
+        id: tests
+        continue-on-error: true
+        run: pytest -q tests/test_live_site.py tests/test_agentic_live_site.py --junitxml=ibadan-life-qa-report.xml
+      - name: Generate report and optional AI review
+        if: always()
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/generate_qa_report.py ibadan-life-qa-report.xml
+      - name: Add QA result summary
+        if: always()
+        env:
+          JOB_STATUS: ${{ steps.tests.outcome }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          {
+            echo "## Ibadan Life QA Agent"
+            echo ""
+            echo "- Automated test result: **${JOB_STATUS}**"
+            echo "- Trigger: ${EVENT_NAME}"
+            echo "- Target: ${IBADAN_LIFE_URL}"
+            echo "- Coverage: character creation, gameplay actions, all phone app panels, navigation tabs, profile editing/local save, bank shortcut, quick-shift repeat taps, browser runtime errors."
+            echo "- AI review: see the AI_REVIEW.md artifact file; configure OPENAI_API_KEY repository secret to enable researched AI recommendations."
+            echo "- Limits: multiplayer/cloud services and real-device performance need separate configured tests."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload QA report, screenshots and exploration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibadan-life-qa-agent-report
+          path: |
+            ibadan-life-qa-report.xml
+            qa-output/
+          if-no-files-found: ignore
+          retention-days: 30
+      - name: Fail if browser QA found problems
+        if: always() && steps.tests.outcome == 'failure'
+        run: exit 1

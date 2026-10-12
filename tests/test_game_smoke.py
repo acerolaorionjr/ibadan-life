@@ -44,6 +44,8 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{port}/index.html?test=1", wait_until="domcontentloaded")
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
+                page.locator("#beginNewLife").click()
+                page.locator("#characterName").wait_for(state="visible")
                 page.locator("#characterName").fill("Test Sim")
                 page.locator("#characterGender").select_option("Woman")
                 page.locator("#rollBackground").click()
@@ -55,6 +57,30 @@ def test_mobile_game_start_buy_mode_and_save():
                     "() => document.querySelector('#startScreen').style.display === 'none'"
                 )
                 assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
+
+                # Returning players get a choice; cancelling a new life never overwrites the old save.
+                saved_balance = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                assert page.locator("#continueLife").is_visible()
+                page.locator("#beginNewLife").click()
+                page.locator("#newLifeConfirm:not([hidden])").wait_for(state="visible")
+                page.locator("#cancelNewLife").click()
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money") == saved_balance
+                page.locator("#continueLife").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+
+                # A quick shift pays once, then blocks repeated taps during its cooldown.
+                starting_money = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                starting_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
+                page.locator('[data-action="work"]').click()
+                after_first_shift = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                after_shift_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
+                assert after_first_shift == starting_money + 3500
+                assert after_shift_time >= starting_time + 120
+                page.locator('[data-action="work"]').click()
+                after_second_tap = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                assert after_second_tap == after_first_shift
 
                 # The top finance shortcut must open the bank instead of being a dead button.
                 page.locator("#addMoney").click()
@@ -80,6 +106,8 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "plant" not in page.evaluate("localStorage.getItem('ibadanLifeInventory') || ''")
                 page.wait_for_timeout(3500)
                 page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#continueLife").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'",
                     timeout=15000,
@@ -137,6 +165,8 @@ def test_mobile_game_start_buy_mode_and_save():
                     localStorage.setItem('ibadanLifeSave', JSON.stringify(save));
                 }""")
                 page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#continueLife").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'",
                     timeout=15000,
@@ -165,6 +195,26 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.wait_for_function(
                     "() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').billboardAd === 'Mini-mart'"
                 )
+                # Replacing a life creates a recoverable backup, and restore brings it back.
+                previous_name = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name")
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#beginNewLife").click()
+                page.locator("#newLifeConfirm:not([hidden])").wait_for(state="visible")
+                page.locator("#confirmNewLife").click()
+                page.locator("#characterName").wait_for(state="visible")
+                page.locator("#characterName").fill("Replacement Sim")
+                page.locator("#rollBackground").click()
+                page.locator("#startGame").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Replacement Sim"
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                assert page.locator("#restoreBackup").is_visible()
+                page.locator("#restoreBackup").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == previous_name
+
                 assert not errors, "Browser runtime errors: " + " | ".join(errors)
                 context.close()
                 browser.close()
