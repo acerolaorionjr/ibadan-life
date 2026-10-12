@@ -221,9 +221,12 @@
     else{renderAuth();state('Sign in or create a player account to chat.');}
     if(!authListenerRegistered){authListenerRegistered=true;client.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{if(event==='SIGNED_OUT'){await stopChannels();user=null;profile=null;render();}else if(session&&!user){user=session.user;try{await loadProfile();await enterChat();}catch(e){state(e.message||'Could not load player profile.');}}},0);});}
   }
-  window.IbadanMultiplayer={open:()=>{render().catch(e=>state(e.message||'Multiplayer failed to load.'));},isConfigured:()=>configured,queueSave:async saveData=>{
-    if(!client||!user||!configured||!saveData)return;
-    const {error}=await client.from('ibadan_game_saves').upsert({user_id:user.id,save_data:saveData,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-    if(error)state('Cloud save not synced: '+error.message);
-  }};
+  let lastCloudSaveAt=0;
+  async function ensureClient(){if(!configured||!window.supabase?.createClient)return null;if(!client)client=window.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});return client;}
+  window.IbadanMultiplayer={open:()=>{render().catch(e=>state(e.message||'Multiplayer failed to load.'));},isConfigured:()=>configured,
+    getAccountState:async()=>{if(!configured)return {configured:false,signedIn:false};const c=await ensureClient();if(!c)return {configured:true,signedIn:false,unavailable:true};const {data,error}=await c.auth.getSession();if(error)throw error;const session=data?.session;if(!session){user=null;profile=null;return {configured:true,signedIn:false};}user=session.user;await loadProfile();return {configured:true,signedIn:true,username:profile?.username||'player',displayName:profile?.display_name||''};},
+    loadSave:async()=>{const c=await ensureClient();if(!c)return null;const account=await window.IbadanMultiplayer.getAccountState();if(!account.signedIn)return null;const {data,error}=await c.from('ibadan_game_saves').select('save_data,updated_at').eq('user_id',user.id).maybeSingle();if(error)throw error;return data?.save_data||null;},
+    signOut:async()=>{const c=await ensureClient();if(!c)return;await stopChannels();const {error}=await c.auth.signOut();if(error)throw error;user=null;profile=null;},
+    queueSave:async saveData=>{if(!client||!user||!configured||!saveData||Date.now()-lastCloudSaveAt<15000)return;lastCloudSaveAt=Date.now();const {error}=await client.from('ibadan_game_saves').upsert({user_id:user.id,save_data:saveData,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error){lastCloudSaveAt=0;state('Cloud save not synced: '+error.message);}}
+  };
 })();
