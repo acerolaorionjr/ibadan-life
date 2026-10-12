@@ -34,6 +34,8 @@ def test_deployed_game_starts_and_core_controls_work():
         response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
         assert response is not None and response.status < 400, f"Game URL returned HTTP {response.status if response else 'no response'}"
         page.locator("#startScreen").wait_for(state="visible", timeout=30000)
+        page.locator("#beginNewLife").click()
+        page.locator("#characterName").wait_for(state="visible", timeout=10000)
         page.locator("#characterName").fill("QA Test Player")
         page.locator("#characterGender").select_option("Woman")
         page.locator("#rollBackground").click()
