@@ -58,6 +58,18 @@ def test_mobile_game_start_buy_mode_and_save():
                 )
                 assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Test Sim"
 
+                # Returning players get a choice; cancelling a new life never overwrites the old save.
+                saved_balance = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                assert page.locator("#continueLife").is_visible()
+                page.locator("#beginNewLife").click()
+                page.locator("#newLifeConfirm:not([hidden])").wait_for(state="visible")
+                page.locator("#cancelNewLife").click()
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money") == saved_balance
+                page.locator("#continueLife").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+
                 # A quick shift pays once, then blocks repeated taps during its cooldown.
                 starting_money = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').money")
                 starting_time = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').gameMinutes")
