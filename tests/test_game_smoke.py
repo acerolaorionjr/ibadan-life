@@ -195,6 +195,26 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.wait_for_function(
                     "() => JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').billboardAd === 'Mini-mart'"
                 )
+                # Replacing a life creates a recoverable backup, and restore brings it back.
+                previous_name = page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name")
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                page.locator("#beginNewLife").click()
+                page.locator("#newLifeConfirm:not([hidden])").wait_for(state="visible")
+                page.locator("#confirmNewLife").click()
+                page.locator("#characterName").wait_for(state="visible")
+                page.locator("#characterName").fill("Replacement Sim")
+                page.locator("#rollBackground").click()
+                page.locator("#startGame").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == "Replacement Sim"
+                page.reload(wait_until="domcontentloaded")
+                page.locator("#startLanding").wait_for(state="visible")
+                assert page.locator("#restoreBackup").is_visible()
+                page.locator("#restoreBackup").click()
+                page.wait_for_function("() => document.querySelector('#startScreen').style.display === 'none'")
+                assert page.evaluate("JSON.parse(localStorage.getItem('ibadanLifeSave') || '{}').playerProfile.name") == previous_name
+
                 assert not errors, "Browser runtime errors: " + " | ".join(errors)
                 context.close()
                 browser.close()
