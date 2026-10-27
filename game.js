@@ -279,7 +279,8 @@ $('closePhone').addEventListener('click',()=>{phone.classList.remove('show');pho
 function openPhone(){phone.classList.add('show');phone.setAttribute('aria-hidden','false')}
 if(new URLSearchParams(location.search).get('test')==='1'){
  window.__ibadanTest=Object.freeze({
-  movePlayerNearNpc(){const target=npcs[0];if(target)player.position.set(target.g.position.x+1,0,target.g.position.z+1)}
+  movePlayerNearNpc(){const target=npcs[0];if(target)player.position.set(target.g.position.x+1,0,target.g.position.z+1)},
+  playerPosition(){return {x:player.position.x,z:player.position.z}}
  });
 }
 renderUI()
