@@ -228,11 +228,11 @@ function closeLife(){$('lifeModal').classList.remove('show');$('lifeModal').setA
 $('closeLife').addEventListener('click',closeLife);
 function openCityDirectory(){
  const cities=Object.values(CITIES);
- lifeModal('🗺️ Nigerian city directory','Choose a city to inspect its places and activities. Ibadan is the currently playable 3D district; other city entries are planning previews, not falsely presented as completed maps.',cities.map(c=>({title:c.name+' · '+c.region,desc:c.status==='playable'?'Playable 3D map · '+c.locations.length+' places':'Place directory preview · '+c.locations.length+' planned places',run:()=>openCityPlaces(c.name)})));
+ lifeModal('🗺️ Nigerian city directory','Choose a city to inspect its places and activities. Ibadan is the currently playable 3D district; other city entries are planning previews, not falsely presented as completed maps.',cities.map(c=>({title:c.name+' · '+c.region,desc:c.status==='playable'?'Playable 3D map · '+c.locations.length+' places':'Place directory preview · '+c.locations.length+' planned places',run:()=>setTimeout(()=>openCityPlaces(c.name),0)})));
 }
 function openCityPlaces(cityName){
  const city=CITIES[cityName];if(!city)return;
- lifeModal('📍 '+city.name+' places','Select a place to see activities, access rules and the planned interior type.',city.locations.map(loc=>({title:loc.name,desc:loc.activities.join(' · ')+' | '+loc.accessRule,run:()=>openPlaceCard(cityName,loc.id)})).concat([{title:'← All cities',desc:'Return to the city directory',run:openCityDirectory}]));
+ lifeModal('📍 '+city.name+' places','Select a place to see activities, access rules and the planned interior type.',city.locations.map(loc=>({title:loc.name,desc:loc.activities.join(' · ')+' | '+loc.accessRule,run:()=>setTimeout(()=>openPlaceCard(cityName,loc.id),0)})).concat([{title:'← All cities',desc:'Return to the city directory',run:()=>setTimeout(openCityDirectory,0)}]));
 }
 function openPlaceCard(cityName,placeId){
  const city=CITIES[cityName],loc=city&&city.locations.find(x=>x.id===placeId);if(!loc)return;
@@ -241,13 +241,13 @@ function openPlaceCard(cityName,placeId){
  if(cityName==='Ibadan'&&loc.target)choices.push({title:'📍 Go there',desc:'Move to this district in the 3D city',run:()=>moveToDistrict(loc.target[0],loc.target[1],loc.name,0)});
  if(cityName==='Ibadan'&&loc.id==='home')choices.push({title:'🏠 Return home',desc:'Go back to your starting home',run:()=>{const st=STARTS[activeStart];if(st)moveToDistrict(st.spawn[0],st.spawn[1],'Home',0)}});
  if(cityName!=='Ibadan')choices.push({title:'🛠️ City map in development',desc:'This is a location-directory preview; the separate 3D map is not live yet.',run:()=>toast(cityName+' 3D map is still in development')});
- choices.push({title:'← Back to '+city.name,desc:'See other places in this city',run:()=>openCityPlaces(cityName)});
+ choices.push({title:'← Back to '+city.name,desc:'See other places in this city',run:()=>setTimeout(()=>openCityPlaces(cityName),0)});
  lifeModal('📍 '+loc.name,desc,choices);
 }
 function openCityTravelDesk(){
  lifeModal('🚌 City travel desk','Fares are in-game money. This build keeps the current 3D world in Ibadan; other destinations are listed so their route and city data can be built next.',[
  {title:'Stay in Ibadan · Free',desc:'Continue exploring the playable 3D map',run:()=>{currentCity='Ibadan';$('place').textContent='Ibadan · Oyo State';toast('📍 You are in Ibadan');renderUI();saveGame()}},
- ...Object.values(CITIES).filter(c=>c.name!=='Ibadan').map(c=>({title:'Plan trip to '+c.name+' · '+moneyText(c.fare),desc:c.region+' · city directory preview only; separate 3D map is not live yet',run:()=>{if(money<c.fare){toast('💸 You need '+moneyText(c.fare)+' for this trip');return}lifeModal('✈️ Travel to '+c.name,'The '+c.name+' 3D map is not ready yet. Your money and current city will not change until that map is playable.',[{title:'Open '+c.name+' place directory',desc:'Preview districts, activities and access rules',run:()=>openCityPlaces(c.name)},{title:'Not now',desc:'Stay in Ibadan',run:()=>{}}])}}))
+ ...Object.values(CITIES).filter(c=>c.name!=='Ibadan').map(c=>({title:'Plan trip to '+c.name+' · '+moneyText(c.fare),desc:c.region+' · city directory preview only; separate 3D map is not live yet',run:()=>{if(money<c.fare){toast('💸 You need '+moneyText(c.fare)+' for this trip');return}lifeModal('✈️ Travel to '+c.name,'The '+c.name+' 3D map is not ready yet. Your money and current city will not change until that map is playable.',[{title:'Open '+c.name+' place directory',desc:'Preview districts, activities and access rules',run:()=>setTimeout(()=>openCityPlaces(c.name),0)},{title:'Not now',desc:'Stay in Ibadan',run:()=>{}}])}}))
  ]);
 }
 function handleAppAction(name,label){
