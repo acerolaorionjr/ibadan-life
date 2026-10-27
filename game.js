@@ -369,6 +369,8 @@ function openPhone(){phone.classList.add('show');phone.setAttribute('aria-hidden
 if(new URLSearchParams(location.search).get('test')==='1'){
  window.__ibadanTest=Object.freeze({
   movePlayerNearNpc(){const target=npcs[0];if(target)player.position.set(target.g.position.x+1,0,target.g.position.z+1)},
+  movePlayerNearMamaPut(){player.position.set(0,0,-19.7);hunger=40},
+  mamaPutState(){return {inside:mamaPut.inside,money,hunger}},
   playerPosition(){return {x:player.position.x,z:player.position.z}}
  });
 }
