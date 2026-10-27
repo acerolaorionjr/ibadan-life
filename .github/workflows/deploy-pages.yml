@@ -9,10 +9,11 @@ on:
 
 concurrency:
   group: ibadan-life-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   validate:
+    timeout-minutes: 12
     runs-on: ubuntu-latest
     permissions:
       contents: read
