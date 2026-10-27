@@ -49,7 +49,13 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator("#rollBackground").click()
                 page.locator("#originReveal:not([hidden])").wait_for(state="visible")
                 assigned_origin = page.locator("#originResult").inner_text()
-                assert any(origin in assigned_origin for origin in ["LAPO Baby", "Nepo Baby", "Student"])
+                assert any(origin in assigned_origin for origin in [
+                    "LAPO Baby", "Student", "Average", "Comfortable", "Nepo Baby", "Wealthy"
+                ])
+                # Editing the character must not reroll the already-revealed birth background.
+                page.locator("#editCharacter").click()
+                page.locator("#rollBackground").click()
+                assert page.locator("#originResult").inner_text() == assigned_origin
                 page.locator("#startGame").click()
                 page.wait_for_function(
                     "() => document.querySelector('#startScreen').style.display === 'none'"
