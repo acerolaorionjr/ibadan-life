@@ -113,6 +113,24 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "Garage" in page.locator("#lifeTitle").inner_text()
                 page.locator("#closeLife").click()
 
+                # The player must move from keyboard input and the on-screen D-pad must be usable.
+                assert page.locator("#moveControls").is_visible()
+                before = page.evaluate("window.__ibadanTest.playerPosition()")
+                page.keyboard.down("w")
+                page.wait_for_timeout(350)
+                page.keyboard.up("w")
+                after = page.evaluate("window.__ibadanTest.playerPosition()")
+                assert ((after["x"] - before["x"]) ** 2 + (after["z"] - before["z"]) ** 2) > 0.1
+
+                before = after
+                pad = page.locator('[data-move="right"]')
+                pad.hover()
+                page.mouse.down()
+                page.wait_for_timeout(350)
+                page.mouse.up()
+                after = page.evaluate("window.__ibadanTest.playerPosition()")
+                assert ((after["x"] - before["x"]) ** 2 + (after["z"] - before["z"]) ** 2) > 0.1
+
                 page.keyboard.down("a")
                 page.keyboard.down("s")
                 page.wait_for_timeout(300)
