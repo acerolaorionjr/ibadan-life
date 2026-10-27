@@ -46,8 +46,10 @@ def test_mobile_game_start_buy_mode_and_save():
                 page.locator("#startScreen").wait_for(state="visible", timeout=15000)
                 page.locator("#characterName").fill("Test Sim")
                 page.locator("#characterGender").select_option("Woman")
+                page.locator("#characterTrait1").select_option("Hardworking")
+                page.locator("#characterTrait2").select_option("Friendly")
                 page.locator("#rollBackground").click()
-                page.locator("#originReveal:not([hidden])").wait_for(state="visible")
+                page.locator("#originReveal").wait_for(state="visible", timeout=10000)
                 assigned_origin = page.locator("#originResult").inner_text()
                 assert any(origin in assigned_origin for origin in [
                     "LAPO Baby", "Student", "Average", "Comfortable", "Nepo Baby", "Wealthy"
