@@ -270,7 +270,7 @@ let investmentBalance=Number(localStorage.getItem('ibadanLifeInvestment')||0);fu
 function cashOutInvestment(){if(investmentBalance<=0){toast('📈 You have no investments to cash out');return}const payout=Math.round(investmentBalance*1.05);money+=payout;investmentBalance=0;localStorage.setItem('ibadanLifeInvestment','0');toast('📈 Cashed out · +'+moneyText(payout));renderUI();saveGame()}
 function buyFood(cost,restore){if(money<cost){toast('💸 Not enough money for food');return}money-=cost;hunger=Math.min(100,hunger+restore);toast('🍛 Meal purchased · −'+moneyText(cost));renderUI();saveGame()}
 function attendEvent(cost,funGain,socialGain,label){if(money<cost){toast('💸 Not enough money for this activity');return}money-=cost;fun=Math.min(100,fun+funGain);social=Math.min(100,social+socialGain);gameMinutes+=60;toast('🎟️ You attended a '+label);renderUI();saveGame()}
-function socialChat(person){social=Math.min(100,social+15);fun=Math.min(100,fun+5);toast('💬 You chatted with '+person);renderUI();saveGame()}
+function socialChat(person){social=Math.min(100,social+(hasTrait('Friendly')?20:15));fun=Math.min(100,fun+(hasTrait('Friendly')?8:5));gameMinutes+=10;toast('💬 You chatted with '+person);renderUI();saveGame()}
 function dLabel(n){return appCopy[n]?appCopy[n][0]:n}
 
 document.querySelectorAll('[data-app]').forEach(b=>b.addEventListener('click',()=>openApp(b.dataset.app)));
