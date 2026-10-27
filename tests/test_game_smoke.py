@@ -142,6 +142,20 @@ def test_mobile_game_start_buy_mode_and_save():
                 assert "Friendship level" in page.locator("#lifeDesc").inner_text()
                 page.locator("#lifeChoices .choice").first.click()
                 page.wait_for_function("Object.keys(JSON.parse(localStorage.getItem('ibadanLifeRelationships') || '{}')).length > 0")
+                # Walk up to Mama Put, enter the visible interior, buy food and exit again.
+                page.evaluate("window.__ibadanTest.movePlayerNearMamaPut()")
+                page.locator("#mamaPromptButton").wait_for(state="visible", timeout=5000)
+                page.locator("#mamaPromptButton").click()
+                page.locator("#mamaBuyMeal").wait_for(state="visible")
+                before_meal = page.evaluate("window.__ibadanTest.mamaPutState()")
+                page.locator("#mamaBuyMeal").click()
+                after_meal = page.evaluate("window.__ibadanTest.mamaPutState()")
+                assert after_meal["inside"] is True
+                assert after_meal["money"] == before_meal["money"] - 650
+                assert after_meal["hunger"] > before_meal["hunger"]
+                page.locator("#mamaExit").click()
+                assert page.evaluate("window.__ibadanTest.mamaPutState().inside") is False
+
                 page.locator('.bottom button[data-tab="phone"]').click()
                 page.locator('.phoneGrid [data-app="housing"]').click()
                 page.locator('#appPanel [data-app-action="housing"]').first.click()
